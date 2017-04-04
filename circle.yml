@@ -7,18 +7,24 @@ general:
         - /home/ubuntu/CircleTest/app/build/outputs/apk/
 
 machine:
+    java:
+        version: oraclejdk8
     environment:
         ANDROID_HOME: /usr/local/android-sdk-linux
 
+
 dependencies:
-    pre:
+  pre:
         - echo y | android update sdk --no-ui --all --filter "platform-tools, tools"
         - echo y | android update sdk --no-ui --all --filter "android-25, build-tools-25.0.2"
         - echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"
         - echo y | android update sdk --no-ui --all --filter "extra-android-support"
         - ANDROID_HOME=/usr/local/android-sdk-linux ./gradlew dependencies
+    cache_directories:
+        - /usr/local/android-sdk-linux/tools
+        - /usr/local/android-sdk-linux/build-tools/25.0.2
 
 test:
     override:
-        - (./gradlew assemble):
-            timeout: 360
+        - ./gradlew assemble
+        - cp -r app/build/outputs $CIRCLE_ARTIFACTS
