@@ -1,27 +1,33 @@
-#
-# Build configuration for Circle CI
-#
+# Build configuration file for Circle CI
+# needs to be named `circle.yml` and should be in the top level dir of the repo
 
 general:
-    artifacts:
-        - /home/ubuntu/CircleTest/app/build/outputs/apk/
+  artifacts:
+    -/home/ubuntu/CircleTest/build/outputs/reports/**testFolderName**/connected
 
 machine:
-    java:
-        version: oraclejdk8
-    environment:
-        ANDROID_HOME: /usr/local/android-sdk-linux
-
+  environment:
+    ANDROID_HOME: /home/ubuntu/android
+  java:
+    version: oraclejdk6
 
 dependencies:
-  pre:
-        - echo y | android update sdk --no-ui --all --filter tools,platform-tools,extra-google-m2repository,extra-google-google_play_services,extra-android-support,extra-android-m2repository,android-25
-        - echo y | android update sdk --no-ui --all --filter build-tools-25.0.2
-    cache_directories:
-        - /usr/local/android-sdk-linux/tools
-        - /usr/local/android-sdk-linux/build-tools/25.0.2
+  cache_directories:
+    - ~/.android
+    - ~/android
+  override:
+    - (echo "Downloading Android SDK v25 now!")
+    - (source scripts/environmentSetup.sh && getAndroidSDK)
 
 test:
-    override:
-        - ./gradlew assemble
-        - cp -r app/build/outputs $CIRCLE_ARTIFACTS
+  pre:
+    - $ANDROID_HOME/tools/emulator -avd testAVD -no-skin -no-audio -no-window:
+      background: true
+    - (./gradlew assembleDebug):
+      timeout: 1200
+    - (./gradlew assembleDebugTest):
+      timeout: 1200
+    - (source scripts/environmentSetup.sh && waitForAVD)
+  override:
+    - (echo "Running JUnit tests!")
+    - (./gradlew connectedAndroidTest)
